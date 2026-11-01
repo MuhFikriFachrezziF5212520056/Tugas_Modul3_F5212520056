@@ -40,12 +40,23 @@ class BukuModel:
         return False
 
     def delete_buku(self, id_buku):
-        if self.conn:
+        try:
             cursor = self.conn.cursor()
-            query = f"DELETE FROM {self.table_name} WHERE id_buku = %s"
-            val = (id_buku,)
-            cursor.execute(query, val)
+
+            # 1. Matikan pengecekan FK sementara
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+
+            # 2. Hapus data buku
+            query = "DELETE FROM buku WHERE id_buku = %s"
+            cursor.execute(query, (id_buku,))
+
+            # 3. Aktifkan kembali pengecekan FK
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+
             self.conn.commit()
             cursor.close()
             return True
-        return False
+        except Exception as e:
+            print(f"Error saat menghapus data: {e}")
+            self.conn.rollback()
+            return False
